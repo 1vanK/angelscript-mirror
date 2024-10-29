@@ -1,0 +1,50 @@
+name: CI/CD
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  Linux:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        COMPILER:
+        - {
+            ID: gcc,
+            C: gcc,
+            CXX: g++,
+          }
+        - {
+            ID: clang,
+            C: clang,
+            CXX: clang++,
+          }
+        BUILD_TYPE:
+        - {
+            ID: dbg,
+            VALUE: Debug,
+          }
+        - {
+            ID: rel,
+            VALUE: Release,
+          }
+
+    name: 🐧-${{ matrix.COMPILER.ID }}-${{ matrix.BUILD_TYPE.ID }}
+
+    steps:
+    - name: Clone repo
+      uses: actions/checkout@v4
+      with:
+        path: repo
+
+    - name: CMake
+      run: |
+        cmake repo/sdk/angelscript/projects/cmake -B build -G "Unix Makefiles" \
+          -D CMAKE_C_COMPILER=${{ matrix.COMPILER.C }} -D CMAKE_CXX_COMPILER=${{ matrix.COMPILER.CXX }} \
+          -D CMAKE_BUILD_TYPE=${{ matrix.BUILD_TYPE.VALUE }}
+
+    - name: Build
+      run: cmake --build build
